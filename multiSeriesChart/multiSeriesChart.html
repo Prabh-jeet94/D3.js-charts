@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Multi Series Line Chart</title>
+		<link rel="stylesheet" type="text/css" href="../style.css">
+		<link href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet"/>
+	</head>
+	<body>
+		<h3 class="text-center">Multi Series Line Chart</h3>
+		<div class="col-xs-12">
+			<div class="lineChart"></div>
+		</div>
+
+		<!-- jquery cdn -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		<!-- script to load bootstrap -->
+		<script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+		<!-- added d3 library -->
+		<script src="//d3js.org/d3.v4.min.js"></script>
+
+		<script type="text/javascript">
+			var margin = {top: 20, right: 80, bottom: 30, left:50};
+			var width = 960 - margin.right - margin.left,
+				height = 500 - margin.top - margin.bottom;
+
+			var svg = d3.select(".lineChart").append("svg")
+				.attr("width", 960 )
+				.attr("height", 500);
+			var	g = svg.append("g")
+					.attr("transform", "translate("+ margin.left + "," +margin.top + ")");
+
+			var parseTime = d3.timeParse("%Y%m%d");
+
+			var x = d3.scaleTime().range([0, width]),
+				y = d3.scaleLinear().range([height, 0]),
+				z = d3.scaleOrdinal(d3.schemeCategory10);
+
+			var line = d3.line()
+				.x(function(d){ return x(d.date) ;})
+				.y(function(d){ return y(d.temperature) ;})
+
+			d3.tsv("./data.tsv", type, function(error, data){
+				if (error) throw error;
+
+				var dataObj = data.columns.splice(1).map(function(cityName){
+					return {
+						cityName: cityName,
+						value: data.map(function(d){
+							return { date: d.date,
+							temperature: d[cityName]};
+						})
+					};
+				});
+				x.domain(d3.extent(data, function(d){ return d.date}));
+				y.domain([
+					d3.min(dataObj, function(val){ return d3.min(val.value, function(d){ return d.temperature;}); }), 
+					d3.max(dataObj, function(val){ return d3.max(val.value, function(d){ return d.temperature;}); })
+				])
+				z.domain(dataObj.map(function(d){ d.cityName}))
+
+				g.append("g")
+					.attr("class", "xAxis")
+					.attr("transform", "translate(0," + height + ")")
+					.call(d3.axisBottom(x));
+				
+				g.append("g")
+					.attr("class", "yAxis")
+					.call(d3.axisLeft(y))
+					.append("text")
+					.attr("fill", "#000")
+					.attr("transform", "rotate(-90)")
+					.attr("y", 16)
+					.text("Temp (F)");
+
+				var city = g.selectAll(".city")
+					.data(dataObj)
+					.enter().append("g")
+					.attr("class", "city");
+
+				city.append("path")
+					.attr("class", "lines")
+					.attr("d", function(d){ return line(d.value)})
+					.style("stroke", function(d){ return z(d.cityName)});
+
+				city.append("text")
+					.datum(function(d) { return {id: d.cityName, value: d.value[d.value.length - 1]}; })
+					.text(function(d){ return d.id})
+					.attr("transform", function(d) {
+						return "translate(" + x(d.value.date) + "," + y(d.value.temperature) + ")"; })
+					.style("fill", function(d){ console.log(d) ; return z(d.id)})
+			});
+			function type(d, _, columns) {
+			  d.date = parseTime(d.date);
+			  for (var i = 1, n = columns.length, c; i < n; ++i) d[c = columns[i]] = +d[c];
+			  	return d;
+			}
+		</script>
+	</body>
+</html>

@@ -1,0 +1,27 @@
+.tooltip-sunburst{
+	display: none;
+	padding: 5px;
+	position: absolute;
+	z-index: 1000;
+}
+#sunburstChart{
+	text-align: center;
+}
+#legends{
+	margin: 10px 10px;
+}
+path.domain{
+    stroke: #000 !important;
+}
+
+/********************  Multi Line Chart styles **************************************/
+.lineChart{
+	width: 960px;
+	min-height: 500px;
+	margin: 20px auto;
+	border: 1px solid #000;
+}
+.lines{
+	fill: none;
+	stroke-width: 1.5px;
+}
